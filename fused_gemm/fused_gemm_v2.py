@@ -1,4 +1,4 @@
-# version1 每个线程块分别会读取q和k的一部分，然后计算矩阵乘法，最后写回结果
+# version2 每个线程块分别会读取q和k的一部分，然后计算矩阵乘法，最后写回结果
 # 这样会导致q和k的块会被不同线程重复读取，可能导致性能下降
 # 使用make_block_ptr, 性能相比手写ptrs可能会有所提升
 # 三维Grid，每个kernel能处理一块
@@ -59,7 +59,7 @@ def batched_matmul_kernel(
     # 分块计算矩阵乘法
     q = tl.load(q_ptrs)
     k = tl.load(k_ptrs)
-    acc += tl.dot(q, k.T)
+    acc += tl.dot(q, k.T,input_precision = "ieee")
 
     # 写回结果, stride_attn_m为N，?=BLOCK_N,所以地址不连续
     attn_ptrs = attn_ptr + pid_batch * stride_attn_bn +\

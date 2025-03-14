@@ -88,11 +88,11 @@ def hstu_fused_attention_kernel(
             #加载output的块  O_j
             o = tl.load(o_ptrs).to(tl.float32)
             #计算Q_j * K_i, 得到QK_ji, (BLOCK_N, BLOCK_N)
-            qk = tl.dot(q, k.T, out_dtype=tl.float32)
+            qk = tl.dot(q, k.T,input_precision = "ieee")
             #TODO: SiLU(QK_ji) / N
 
             #QK_ji * V_i, 得到QK_ji * V_i, (BLOCK_N, D)
-            attn = tl.dot(qk, v, out_dtype=tl.float32)
+            attn = tl.dot(qk, v,input_precision = "ieee")
             #O_j += QK_ji * V_i
             o += attn
             #stroe O_j
@@ -109,7 +109,7 @@ def hstu_fused_attention(q, k, v, rab, enable_rab):  #N为padded后的长度， 
     rab = rab.contiguous()
 
     # 预分配输出张量
-    output = torch.empty_like(q)
+    output = torch.zeros_like(q)
 
     # 调用 Triton 内核
     grid = (B, H)  # 每个batch的每个head单独计算
